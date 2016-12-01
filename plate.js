@@ -1,5 +1,13 @@
-var Plate = function(options){
-
+var Microplate = function (options){
+	
+	/*
+		This represents an SBS-standard microplate.
+		It defaults to a 96-well plate, but anything from a 6-well 
+		to a 3456-well plate can be represented.
+		Users can opt for circular, square, or rounded-square well
+		shapes.
+	*/
+	
 	options = options || {};
 
 	var maxWidth = 1000;
@@ -10,6 +18,7 @@ var Plate = function(options){
 	this.columns = parseInt(options.columns, 10) || 12;
 	['rows', 'columns'].forEach(function(dim){
 		if(this[dim] > 702){
+			//Constrain dimensions to something reasonable
 			this[dim] = 702;
 		}
 	});
@@ -36,9 +45,10 @@ var Plate = function(options){
 			return wells;
 		}
 	});
-}
+	
+};
 
-Plate.prototype.buildWells = function(){
+Microplate.prototype.buildWells = function(){
 	/*
 		Well indices go from upper left to lower right in a Z-pattern
 		So on an SBS-standard 96-well plate, Well B03 which is the second 
@@ -50,34 +60,77 @@ Plate.prototype.buildWells = function(){
 		for(var j = 0; j < this.columns; j++){
 			this.wells[i][j] = 
 				new Well(
-					this.getIterator(this.rowIteratorType).apply(null, [i, this.rows]), 
-					this.getIterator(this.colIteratorType).apply(null, [j, this.columns]),
+					this.getIterator(this.rowIteratorType).apply(this, [i, this.rows]), 
+					this.getIterator(this.colIteratorType).apply(this, [j, this.columns]),
 					i + (i * (this.columns - 1)) + j);
 		}
 	}
 }
 
-Plate.prototype.getIterator = function(iteratorType){
+Microplate.prototype.getIterator = function(iteratorType){
 	switch(iteratorType){
 		case "letter":
-			return LetterIterator;
+			return this.LetterIterator;
 			break;
 		case "number":
-			return NumberIterator;
+			return this.NumberIterator;
 			break;
 		default:
-			return NumberIterator;
+			return this.NumberIterator;
 			break;
 	}
 }
 
-Plate.prototype.getWellByCoordinate = function(coordinate){
+Microplate.prototype.getWellByCoordinate = function(coordinate){
 	return this.wellList.filter(function(well){
 		return well.coordinate.toLowerCase() === coordinate.toLowerCase();
 	})[0];
 }
 
-Plate.prototype.getWellByIndex = function(index, oneOffset){
+Microplate.prototype.getWellsByCoordinateRange = function(coordinateRange){
+	/*
+		Take a coordinate range in the following format:
+		start:finish (example A02:B10)
+		and return an array of Well objects
+	*/
+	var self = this;
+	var coords = coordinateRange.split(':');
+	if(coords.length !== 2){
+		return [];
+	}
+	//convert coordinates to indices and sort in ascending order
+	coords = coords.map(function(coord){
+		return self.getWellByCoordinate(coord).index;
+	}).sort(function(a, b){
+		return a - b;
+	});
+	var wells = [];
+	for(var i = coords[0]; i <= coords[1]; i++){
+		wells.push(this.getWellByIndex(i));
+	}
+	return wells;
+}
+
+Microplate.prototype.getWellsByCoordinates = function(coordinateArray){
+	/*
+		Take an array of coordinates and return an array of the 
+		corresponding Well objects
+	*/
+	var self = this;
+	if(!Array.isArray(coordinateArray)){
+		return [];
+	}
+	var wells = [];
+	coordinateArray.forEach(function(coord){
+		var foundWell = self.getWellByCoordinate(coord);
+		if(foundWell){
+			wells.push(foundWell);
+		}
+	});
+	return wells;
+}
+
+Microplate.prototype.getWellByIndex = function(index, oneOffset){
 	//oneOffset means using a 1-based index instead of the 0-based default
 	index = parseInt(index, 10);
 	if(oneOffset){
@@ -91,7 +144,7 @@ Plate.prototype.getWellByIndex = function(index, oneOffset){
 	})[0];
 }
 
-function LetterIterator(iterNum){
+Microplate.prototype.LetterIterator = function(iterNum){
 	var inProgress = '';
 	while(iterNum >= 26){
 		var thisIter = Math.floor((iterNum)/26) - 1;
@@ -102,11 +155,11 @@ function LetterIterator(iterNum){
 	return inProgress;
 }
 
-function NumberIterator(num, max){
-	return zeroPad(num + 1, max.toString().length);
+Microplate.prototype.NumberIterator = function(num, max){
+	return this.zeroPad(num + 1, max.toString().length);
 }
 
-function zeroPad(num, numPlaces) {
+Microplate.prototype.zeroPad = function(num, numPlaces) {
 	num = num + '';
 	return num.length >= numPlaces ? num : new Array(numPlaces - num.length + 1).join('0') + num;
 }
