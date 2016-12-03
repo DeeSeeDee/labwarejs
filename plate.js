@@ -29,7 +29,20 @@ var Microplate = function (options){
 	this.colIteratorType = (['letter', 'number'].indexOf(options.rowIterator) !== -1 
 		? options.rowIterator : 'number');
 
-	this.segmentSize = //do math;
+	/*
+		The final segment size calculation will be much more sophisticated.
+		This is in place simply to provide a reasonable placeholder that
+		will allow me to figure out the rendering. Once I have the rendering
+		working I'll revisit this to be more robust while adhering to the SBS
+		standard plate footprint ratio.
+	*/
+		
+	this.margin = parseInt(options.margin, 10) || 10;
+	this.padding = parseInt(options.padding, 10) || 10;
+		
+	this.width = maxWidth;
+	this.height = maxHeight;
+	this.segmentSize = (this.width - (2 * this.padding) - (2 * this.margin)) / this.columns;
 	this.wells = [];
 	
 	this.buildWells();
@@ -62,7 +75,8 @@ Microplate.prototype.buildWells = function(){
 				new Well(
 					this.getIterator(this.rowIteratorType).apply(this, [i, this.rows]), 
 					this.getIterator(this.colIteratorType).apply(this, [j, this.columns]),
-					i + (i * (this.columns - 1)) + j);
+					i + (i * (this.columns - 1)) + j,
+					{ shape: 'circle' });
 		}
 	}
 }
@@ -162,4 +176,22 @@ Microplate.prototype.NumberIterator = function(num, max){
 Microplate.prototype.zeroPad = function(num, numPlaces) {
 	num = num + '';
 	return num.length >= numPlaces ? num : new Array(numPlaces - num.length + 1).join('0') + num;
+}
+
+Microplate.prototype.render = function(){
+	var $plate = $('<svg xmlns="http://www.w3.org/2000/svg">').attr('width', this.width).attr('height', this.height);
+	var $plateShell = $('<rect>').attr('width', this.width - (2 * this.margin)).attr('height', this.height - (2 * this.margin))
+		.attr('x', this.margin).attr('y', this.margin).attr('stroke', 'black').attr('fill', 'salmon');
+	$plate.append($plateShell);
+	for(var i = 0; i < this.rows; i++){
+		for(var j = 0; j < this.columns; j++){
+			var attribs = {
+				xoffset: (this.segmentSize * j) + this.margin + this.padding,
+				yoffset: (this.segmentSize * i) + this.margin + this.padding,
+				size: this.segmentSize
+			};
+			$plate.append(this.wells[i][j].render(attribs));
+		}
+	}	
+	return $plate[0].outerHTML;
 }

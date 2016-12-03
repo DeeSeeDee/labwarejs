@@ -15,6 +15,18 @@ var Well = function(row, col, index, options){
 	this.maxVolume = parseInt(options.maxVolume, 10);
 	this.volume = parseInt(options.volume, 10);
 	
+	switch(options.shape){
+		case 'circle':
+			this.shape = 'circle'
+			break;
+		case 'rounded':
+			this.shape = 'rounded';
+			break;
+		default:
+			this.shape = 'square';
+			break;
+	}
+	
 	Object.defineProperty(this, 'coordinate', {
 		get: function(){
 			if(
@@ -52,5 +64,24 @@ Well.prototype.addVol = function(vol){
 	this.volume += vol;
 	if(this.volume > this.maxVolume){
 		this.volume = this.maxVolume;
+	}
+}
+
+Well.prototype.render = function(attribs){
+	switch(this.shape){
+		case 'rounded':
+			var radius = attribs.size * 0.05;
+			var size = attribs.size;
+			return $('<rect>').attr('rx', radius).attr('ry', radius).attr('width', size).attr('height', size)
+				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', 'blue');
+		case 'circle':
+			var radius = attribs.size / 2;
+			return $('<circle>').attr('r', radius).attr('cx', attribs.xoffset + radius).attr('cy', attribs.yoffset + radius)
+				.attr('stroke', 'black').attr('fill', 'blue');
+		default:
+			var radius = attribs.size * 0.05;
+			var size = attribs.size;
+			return $('<rect>').attr('width', size).attr('height', size)
+				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', 'blue');
 	}
 }
