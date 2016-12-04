@@ -15,6 +15,9 @@ var Well = function(row, col, index, options){
 	this.maxVolume = parseInt(options.maxVolume, 10);
 	this.volume = parseInt(options.volume, 10);
 	
+	this.padding = parseInt(options.padding, 10) || 5;
+	this.color = options.color || 'white';
+	
 	switch(options.shape){
 		case 'circle':
 			this.shape = 'circle'
@@ -73,15 +76,15 @@ Well.prototype.render = function(attribs){
 			var radius = attribs.size * 0.05;
 			var size = attribs.size;
 			return $('<rect>').attr('rx', radius).attr('ry', radius).attr('width', size).attr('height', size)
-				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', 'blue');
+				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', this.color);
 		case 'circle':
 			var radius = attribs.size / 2;
 			return $('<circle>').attr('r', radius).attr('cx', attribs.xoffset + radius).attr('cy', attribs.yoffset + radius)
-				.attr('stroke', 'black').attr('fill', 'blue');
+				.attr('stroke', 'black').attr('fill', this.color);
 		default:
 			var radius = attribs.size * 0.05;
 			var size = attribs.size;
 			return $('<rect>').attr('width', size).attr('height', size)
-				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', 'blue');
+				.attr('x', attribs.xoffset).attr('y', attribs.yoffset).attr('stroke', 'black').attr('fill', this.color);
 	}
 }

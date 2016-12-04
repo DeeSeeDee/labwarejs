@@ -28,6 +28,10 @@ var Microplate = function (options){
 		? options.rowIterator : 'letter');
 	this.colIteratorType = (['letter', 'number'].indexOf(options.rowIterator) !== -1 
 		? options.rowIterator : 'number');
+	this.backgroundColor = options.bgColor || 'black';
+	this.wellColor = options.wellColor || 'white';
+	this.wellShape = options.wellShape || 'square';
+	this.wellGap = parseInt(options.wellGap, 5) || 5;
 
 	/*
 		The final segment size calculation will be much more sophisticated.
@@ -40,9 +44,14 @@ var Microplate = function (options){
 	this.margin = parseInt(options.margin, 10) || 10;
 	this.padding = parseInt(options.padding, 10) || 10;
 		
+	if(this.padding >= 20 && options.annotations){
+		this.annotations = true;
+		this.annotationColor = options.annotationColor || 'white';
+	}
+		
 	this.width = maxWidth;
-	this.height = maxHeight;
-	this.segmentSize = (this.width - (2 * this.padding) - (2 * this.margin)) / this.columns;
+	this.segmentSize = (this.width - (2 * this.padding) - (2 * this.margin) - (this.columns * this.wellGap)) / this.columns;
+	this.height = ((this.segmentSize * this.rows) + (this.rows * this.wellGap) + (2 * this.margin) + (2 * this.padding));
 	this.wells = [];
 	
 	this.buildWells();
@@ -76,7 +85,11 @@ Microplate.prototype.buildWells = function(){
 					this.getIterator(this.rowIteratorType).apply(this, [i, this.rows]), 
 					this.getIterator(this.colIteratorType).apply(this, [j, this.columns]),
 					i + (i * (this.columns - 1)) + j,
-					{ shape: 'circle' });
+					{ 
+						shape: this.wellShape,
+						padding: this.wellGap,
+						color: this.wellColor
+					});
 		}
 	}
 }
@@ -179,19 +192,33 @@ Microplate.prototype.zeroPad = function(num, numPlaces) {
 }
 
 Microplate.prototype.render = function(){
-	var $plate = $('<svg xmlns="http://www.w3.org/2000/svg">').attr('width', this.width).attr('height', this.height);
-	var $plateShell = $('<rect>').attr('width', this.width - (2 * this.margin)).attr('height', this.height - (2 * this.margin))
-		.attr('x', this.margin).attr('y', this.margin).attr('stroke', 'black').attr('fill', 'salmon');
-	$plate.append($plateShell);
+	var $plate = $('<svg xmlns="http://www.w3.org/2000/svg" class="microplate">')
+		.attr('width', this.width).attr('height', this.height);
+	var $plateG = $('<g>');
+	$plateG.append($('<rect>').attr('width', this.width - (2 * this.margin)).attr('height', this.height - (2 * this.margin))
+		.attr('x', this.margin).attr('y', this.margin).attr('stroke', 'black').attr('fill', this.backgroundColor));
 	for(var i = 0; i < this.rows; i++){
+		if(this.annotations){
+			$plateG.append($('<text>').attr('fill', this.annotationColor)
+				.attr('y', (this.segmentSize * i) + (this.wellGap * i) + this.margin + this.padding + this.segmentSize / 1.8)
+				.attr('x', this.padding / 1.7)
+				.text(this.wells[i][0].row));
+		}
 		for(var j = 0; j < this.columns; j++){
+			if(i === 0 && this.annotations){
+				$plateG.append($('<text>').attr('fill', this.annotationColor)
+					.attr('x', (this.segmentSize * j) + (this.wellGap * j) + this.margin + this.padding + this.segmentSize / 2.5)
+					.attr('y', this.padding)
+					.text(this.wells[0][j].col));
+			}
 			var attribs = {
-				xoffset: (this.segmentSize * j) + this.margin + this.padding,
-				yoffset: (this.segmentSize * i) + this.margin + this.padding,
+				xoffset: (this.segmentSize * j) + this.margin + this.padding + (this.wellGap * j),
+				yoffset: (this.segmentSize * i) + this.margin + this.padding + (this.wellGap * i),
 				size: this.segmentSize
 			};
-			$plate.append(this.wells[i][j].render(attribs));
+			$plateG.append(this.wells[i][j].render(attribs));
 		}
-	}	
+	}
+	$plate.append($plateG);
 	return $plate[0].outerHTML;
 }
