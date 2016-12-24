@@ -112,4 +112,22 @@ $(function(){
 		equal(numberCoordsWell.coordinate, '1,25', 
 			'Numerical coordinates are shown with a comma.');
 	});
+	
+	module('Flowcell Tests');
+	test('Lane', function(){
+		var lane = new Lane({
+			number: 3,
+			maxClusters: 1000000
+		});
+		deepEqual(lane.number, 3, 'Lane number behaves as expected.');
+		deepEqual(lane.overClustered, false, 'Lane with no clusters is not overclustered.');
+		deepEqual(lane.percentFull, 0, 'Lane with no clusters has value zero for "percentFull" property.');
+		deepEqual(lane.totalTiles, false, 'Lane with no geography info has "false" for "totalTiles" property.');
+		lane.clusters += 200000;
+		deepEqual(lane.percentFull, 0.2, 'Lane with added clusters returns correct value for "percentFull" property.');
+		deepEqual(lane.overClustered, false, 'Lane with fewer than max clusters is not overclustered.');
+		lane.clusters += 900000;
+		deepEqual(lane.overClustered, true, 'Lane with more than max clusters is not overclustered.');
+		deepEqual(lane.percentFull, 1, 'Lane with more than max clusters returns one for "percentFull" property.');
+	});
 });

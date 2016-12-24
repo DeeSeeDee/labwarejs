@@ -8,10 +8,9 @@ var Microplate = function (options){
 		shapes.
 	*/
 	
+	var maxWidth = 1800;
+	
 	options = options || {};
-
-	var maxWidth = 1000;
-	var maxHeight = 750;
 	
 	//default to 96-Well
 	this.rows = parseInt(options.rows, 10) || 8;
@@ -26,35 +25,42 @@ var Microplate = function (options){
 		? options.shape : 'circle');
 	this.rowIteratorType = (['letter', 'number'].indexOf(options.rowIterator) !== -1 
 		? options.rowIterator : 'letter');
-	this.colIteratorType = (['letter', 'number'].indexOf(options.rowIterator) !== -1 
+	this.colIteratorType = (['letter', 'number'].indexOf(options.colIterator) !== -1 
 		? options.rowIterator : 'number');
-	this.backgroundColor = options.bgColor || 'black';
-	this.wellColor = options.wellColor || 'white';
 	this.wellShape = options.wellShape || 'square';
 	this.wellGap = parseInt(options.wellGap, 5) || 5;
 
 	/*
-		The final segment size calculation will be much more sophisticated.
-		This is in place simply to provide a reasonable placeholder that
-		will allow me to figure out the rendering. Once I have the rendering
-		working I'll revisit this to be more robust while adhering to the SBS
-		standard plate footprint ratio.
+		The width along with the padding and margin 
+		determines the height dimension
 	*/
-		
+
 	this.margin = parseInt(options.margin, 10) || 10;
 	this.padding = parseInt(options.padding, 10) || 10;
 		
 	if(this.padding >= 20 && options.annotations){
 		this.annotations = true;
-		this.annotationColor = options.annotationColor || 'white';
 	}
 		
-	this.width = maxWidth;
-	this.segmentSize = (this.width - (2 * this.padding) - (2 * this.margin) - (this.columns * this.wellGap)) / this.columns;
-	this.height = ((this.segmentSize * this.rows) + (this.rows * this.wellGap) + (2 * this.margin) + (2 * this.padding));
+	this.width = parseInt(options.width, 10) || 1000;
+	this.width = this.width > maxWidth ? maxWidth : this.width;
+	this.segmentSize = (this.width - (2 * this.padding) - 
+		(2 * this.margin) - (this.columns * this.wellGap)) / this.columns;
+	this.height = ((this.segmentSize * this.rows) + (this.rows * this.wellGap) 
+		+ (2 * this.margin) + (2 * this.padding));
 	this.wells = [];
 	
 	this.buildWells();
+	
+	this.attributes = (options.attributes 
+		&& typeof options.attributes === 'object' 
+		&& typeof options.attributes !== 'null') ? options.attributes : {
+		class: 'plate'
+	};
+	
+	if(!Object.keys(this.attributes).indexOf('class') === -1){
+		this.attributes['class'] = 'plate';
+	}
 	
 	Object.defineProperty(this, 'wellList', {
 		get: function(){
@@ -67,7 +73,6 @@ var Microplate = function (options){
 			return wells;
 		}
 	});
-	
 };
 
 Microplate.prototype.buildWells = function(){
@@ -192,23 +197,32 @@ Microplate.prototype.zeroPad = function(num, numPlaces) {
 }
 
 Microplate.prototype.render = function(){
+	var self = this;
 	var $plate = $('<svg xmlns="http://www.w3.org/2000/svg" class="microplate">')
 		.attr('width', this.width).attr('height', this.height);
+	Object.keys(this.attributes).forEach(function(attrib){
+		$plate.attr(attrib, self.attributes[attrib]);
+	});
 	var $plateG = $('<g>');
-	$plateG.append($('<rect>').attr('width', this.width - (2 * this.margin)).attr('height', this.height - (2 * this.margin))
-		.attr('x', this.margin).attr('y', this.margin).attr('stroke', 'black').attr('fill', this.backgroundColor));
+	var $plateRect = $('<rect>').attr('width', this.width - (2 * this.margin))
+		.attr('height', this.height - (2 * this.margin))
+		.attr('x', this.margin).attr('y', this.margin)
+		.attr('class', 'plate');
+	$plateG.append($plateRect);
 	for(var i = 0; i < this.rows; i++){
 		if(this.annotations){
 			$plateG.append($('<text>').attr('fill', this.annotationColor)
 				.attr('y', (this.segmentSize * i) + (this.wellGap * i) + this.margin + this.padding + this.segmentSize / 1.8)
-				.attr('x', this.padding / 1.7)
+				.attr('x', this.padding / 1.6)
+				.attr('class', 'annotation')
 				.text(this.wells[i][0].row));
 		}
 		for(var j = 0; j < this.columns; j++){
 			if(i === 0 && this.annotations){
 				$plateG.append($('<text>').attr('fill', this.annotationColor)
-					.attr('x', (this.segmentSize * j) + (this.wellGap * j) + this.margin + this.padding + this.segmentSize / 2.5)
+					.attr('x', (this.segmentSize * j) + (this.wellGap * j) + this.margin + this.padding+ this.segmentSize / 2.6)
 					.attr('y', this.padding)
+					.attr('class', 'annotation')
 					.text(this.wells[0][j].col));
 			}
 			var attribs = {
