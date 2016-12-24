@@ -1,6 +1,8 @@
 # labwarejs
 Represent microplates using HTML/SVG and JavaScript.
 
+*The easiest way to use labwarejs in your project is to grab the labware.min.js file*
+
 # Background
 
 My goal at the outset was to keep dependencies at a minimum. At present, `labwarejs` only requires jQuery. In the future, this may change as I expand the baked-in capabilities of the library. For example, I've thought of leveraging d3's color scales to indicate the volume in a microplate well or the number of reads in a flowcell lane. Handlebars or lodash templates would also be a big help. 

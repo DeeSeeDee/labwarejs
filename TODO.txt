@@ -1,3 +1,7 @@
 TODO:
 
 -Fix annotations so they're properly centered on plates other than 96-well.
+
+MAYBE LATER:
+
+-Consolidate components into a single object to reduce global namespace pollution.
