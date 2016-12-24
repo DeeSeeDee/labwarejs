@@ -1,7 +1,9 @@
 # labwarejs
 Represent microplates using HTML/SVG and JavaScript.
 
-*The easiest way to use labwarejs in your project is to grab the labware.min.js file*
+**The easiest way to use labwarejs in your project is to grab the labware.min.js file**
+
+**See labwarejs in action [here](https://deeseedee.github.io/ "Examples"). **
 
 # Background
 
